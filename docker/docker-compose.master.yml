@@ -1,0 +1,29 @@
+services:
+  coordinator:
+    image: nuscenes-trainer:1.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    command: ["python", "-m", "coordinator.server"]
+    environment:
+      KAFKA_BOOTSTRAP: ${KAFKA_BOOTSTRAP}
+      COORD_DB: /db/coordinator.db
+      GRPC_PORT: "50051"
+      CODE_VERSION: ${CODE_VERSION:-dev}
+    ports:
+      - "50051:50051"
+    volumes:
+      - ../data/db:/db
+    restart: unless-stopped
+
+  # Dashboard aislado: solo lectura lógica, expuesto únicamente en localhost
+  dashboard:
+    image: python:3.11-slim
+    command: >
+      sh -c "pip install --no-cache-dir datasette==0.64.8 &&
+             datasette /db/coordinator.db -h 0.0.0.0 -p 8001"
+    ports:
+      - "127.0.0.1:8001:8001"
+    volumes:
+      - ../data/db:/db
+    restart: unless-stopped
