@@ -1,0 +1,113 @@
+﻿syntax = "proto3";
+
+package nuscenes.trainer.v1;
+
+import "google/protobuf/timestamp.proto";
+
+enum ModelType {
+  MODEL_TYPE_UNSPECIFIED = 0;
+  LINEAR_REGRESSION = 1;
+  MLP = 2;
+  CNN = 3;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  RUNNING = 2;
+  COMPLETED = 3;
+  FAILED = 4;
+  REASSIGNED = 5;
+  CANCELLED = 6;
+}
+
+// Cada lista es un eje del producto cartesiano. Una configuración puntual
+// es una lista de un solo elemento. Listas vacías -> INVALID_ARGUMENT.
+message LinearParams {
+  repeated double alpha = 1;
+  repeated bool normalize = 2;
+}
+
+message MlpParams {
+  repeated string hidden_layers = 1;
+  repeated double learning_rate = 2;
+  repeated int32 epochs = 3;
+}
+
+message CnnParams {
+  repeated int32 filters = 1;
+  repeated int32 conv_layers = 2;
+  repeated double learning_rate = 3;
+  repeated int32 epochs = 4;
+  repeated string image_size = 5;
+}
+
+message TrainRequest {
+  ModelType model_type = 1;
+  string dataset_version = 2;
+  string split_version = 3;
+  string target_variable = 4;
+  optional int64 seed = 5;
+  string primary_metric = 6;
+
+  oneof params {
+    LinearParams linear = 7;
+    MlpParams mlp = 8;
+    CnnParams cnn = 9;
+  }
+}
+
+message JobInfo {
+  string job_id = 1;
+  ModelType model_type = 2;
+  JobStatus status = 3;
+  string assigned_worker = 4;
+  int32 attempt = 5;
+  string error_message = 6;
+  double progress = 7;
+  string config_json = 8;
+  string metrics_json = 9;
+  string model_artifact_path = 10;
+}
+
+message SubmitResponse {
+  repeated JobInfo jobs = 1;
+  bool deduplicated = 2;
+}
+
+message JobQuery {
+  string job_id = 1;
+}
+
+message GridSummaryRequest {
+  repeated string job_ids = 1;
+  string primary_metric = 2;
+  bool higher_is_better = 3;
+}
+
+message GridSummaryResponse {
+  JobInfo best_job = 1;
+  repeated JobInfo all_jobs = 2;
+}
+
+message StreamEventsRequest {
+  string consumer_id = 1;
+  int64 since_event_id = 2;
+}
+
+message SystemEvent {
+  google.protobuf.Timestamp timestamp = 1;
+  string event_type = 2;
+  string worker_id = 3;
+  string job_id = 4;
+  string detail_json = 5;
+  int64 event_id = 6;
+}
+
+service TrainerService {
+  rpc SubmitTraining (TrainRequest) returns (SubmitResponse);
+  rpc GetJobStatus (JobQuery) returns (JobInfo);
+  rpc GetJobResult (JobQuery) returns (JobInfo);
+  rpc GetGridSummary (GridSummaryRequest) returns (GridSummaryResponse);
+  rpc StreamEvents (StreamEventsRequest) returns (stream SystemEvent);
+}

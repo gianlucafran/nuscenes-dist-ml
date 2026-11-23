@@ -1,0 +1,22 @@
+﻿FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app:/app/gen \
+    NUSC_DATA=/data \
+    TORCH_THREADS=2
+
+WORKDIR /app
+
+COPY docker/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+
+COPY proto/ ./proto/
+RUN mkdir -p gen && python -m grpc_tools.protoc -I proto --python_out=gen --grpc_python_out=gen proto/trainer.proto
+
+COPY coordinator/ ./coordinator/
+COPY worker/ ./worker/
+COPY experiments/ ./experiments/
+COPY prep_data/ ./prep_data/
+
+CMD ["python", "-m", "coordinator.server"]
