@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Datos, dataset v1.0-mini, recortes, modelos, checkpoints y BD
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.npy
+*.pt
+*.pth
+*.log
