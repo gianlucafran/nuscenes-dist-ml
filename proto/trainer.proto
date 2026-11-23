@@ -1,5 +1,4 @@
-proto/trainer.proto
-proto
+
 syntax = "proto3";
 
 package nuscenes.trainer.v1;
