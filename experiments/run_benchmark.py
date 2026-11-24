@@ -1,5 +1,3 @@
-experiments/run_benchmark.py
-python
 """Benchmark distribuido: envía el mismo grid al coordinador, espera a que termine
 y registra tiempo, % de reducción frente a T_base y estado de los jobs.
 
