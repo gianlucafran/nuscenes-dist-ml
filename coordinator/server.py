@@ -124,6 +124,7 @@ class Servicer(pb_grpc.TrainerServiceServicer):
             combos = [make_job(req, name, hp) for name, hp in expand(req)]
         except ValueError as e:
             ctx.abort(grpc.StatusCode.INVALID_ARGUMENT, str(e))
+            return pb.SubmitResponse()  # ctx.abort ya lanza; esto solo hace explícito el flujo
 
         now = time.time()
         infos, any_dup = [], False
@@ -195,7 +196,7 @@ class Servicer(pb_grpc.TrainerServiceServicer):
                     worker_id=r["worker_id"] or "",
                     job_id=r["job_id"] or "",
                     detail_json=r["detail_json"],
-                    event_id=last,
+                    event_id=r["event_id"],
                 )
             if not rows:
                 time.sleep(0.5)
