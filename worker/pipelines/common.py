@@ -1,4 +1,5 @@
 """Utilidades compartidas: datos, semillas, métricas y escritura atómica."""
+#K
 import json
 import os
 import random
@@ -51,7 +52,7 @@ def regression_metrics(y, pred) -> dict:
         "r2": float(r2_score(y, pred)),
     }
 
-#holz
+
 def atomic_write(path: Path, writer) -> None:
     """writer(file_obj) escribe el contenido. El rename final es atómico en el mismo filesystem."""
     path = Path(path)
