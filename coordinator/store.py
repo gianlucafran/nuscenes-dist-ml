@@ -5,7 +5,7 @@ import sqlite3
 import threading
 import time
 from pathlib import Path
-
+#hola soy chris
 SCHEMA = Path(__file__).with_name("schema.sql")
 
 
