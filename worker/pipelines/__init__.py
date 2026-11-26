@@ -1,4 +1,3 @@
-
 from . import cnn, lineal, mlp
 
 REGISTRY = {
