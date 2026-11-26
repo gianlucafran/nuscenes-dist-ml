@@ -45,10 +45,10 @@ def run_job(job: dict, worker: str, state: dict, lock: threading.Lock) -> dict:
     try:
         out = REGISTRY[job["model_type"]].run(build_cfg(job["config"]), job["job_id"], progress)
         return {**base, "ok": True, "metrics": out["metrics"], "artifact": out["artifact_path"]}
-    except ValueError as e:      # configuración o datos inválidos: no reintentar
+    except (ValueError, KeyError) as e:  # configuración o datos inválidos: error permanente
         log.error("job %s inválido: %s", job["job_id"], e)
         return {**base, "ok": False, "permanent": True, "error": str(e)[:500]}
-    except Exception as e:       # transitorio: el coordinador aplicará backoff
+    except Exception as e:               # transitorio: el coordinador aplicará backoff
         log.exception("job %s falló", job["job_id"])
         return {**base, "ok": False, "permanent": False,
                 "error": f"{type(e).__name__}: {e}"[:500]}
@@ -98,27 +98,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-worker/pipelines/
-
-Sin cambios respecto a mi respuesta anterior. Son __init__.py, common.py, lineal.py, mlp.py y cnn.py. El worker pasa cfg = {"seed": ..., **hparams} y eso coincide con lo que esos módulos esperan.
-
-experiments/grid.py
-python
-"""Grid compartido por baseline y benchmark. Así ambos miden el mismo trabajo."""
-import itertools
-
-SEED = 42
-
-GRID = {
-    "LINEAR_REGRESSION": {"alpha": [0.1, 1.0, 10.0], "normalize": [True, False]},
-    "MLP": {"hidden_layers": ["64,32", "128,64"], "learning_rate": [1e-3], "epochs": [20]},
-    "CNN": {"filters": [16], "conv_layers": [2, 3], "learning_rate": [1e-3],
-            "epochs": [5], "image_size": ["64x64"]},
-}
-
-
-def expand():
-    for model, space in GRID.items():
-        keys = list(space)
-        for vals in itertools.product(*(space[k] for k in keys)):
-            yield model, dict(zip(keys, vals))
