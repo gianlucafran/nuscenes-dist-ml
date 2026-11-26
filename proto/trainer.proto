@@ -1,4 +1,3 @@
-
 syntax = "proto3";
 
 package nuscenes.trainer.v1;
@@ -45,11 +44,11 @@ message CnnParams {
 
 message TrainRequest {
   ModelType model_type = 1;
-  string dataset_version = 2;             // ej. "nuscenes-v1.0-mini"
-  string split_version = 3;               // ej. "scene-split-v1"
+  string dataset_version = 2;             // "nuscenes-v1.0-mini"
+  string split_version = 3;               // "nuscenes-mini-official"
   string target_variable = 4;             // "distance_m" (regresión) | "category" (CNN)
-  optional int64 seed = 5;                // obligatorio; optional permite distinguir 0 de "no enviado"
-  string primary_metric = 6;              // "rmse" (menor es mejor) | "accuracy" (mayor es mejor)
+  optional int64 seed = 5;                // obligatorio; optional distingue 0 de "no enviado"
+  string primary_metric = 6;              // "rmse"/"mae" (regresión) | "accuracy"/"macro_f1" (CNN)
 
   oneof params {
     LinearParams linear = 7;
@@ -62,18 +61,18 @@ message JobInfo {
   string job_id = 1;                      // hash determinista
   ModelType model_type = 2;
   JobStatus status = 3;
-  string assigned_worker = 4;             // "sergio", "joshua", "karina", "patsy"
+  string assigned_worker = 4;
   int32 attempt = 5;
   string error_message = 6;
   double progress = 7;                    // 0.0 a 1.0
-  string config_json = 8;                 // combinación concreta ejecutada
+  string config_json = 8;                 // identidad canónica del job
   string metrics_json = 9;
   string model_artifact_path = 10;
 }
 
 message SubmitResponse {
-  repeated JobInfo jobs = 1;              // N jobs si hubo grid
-  bool deduplicated = 2;                  // true si ya existían por idempotencia
+  repeated JobInfo jobs = 1;
+  bool deduplicated = 2;                  // true si algún job ya existía
 }
 
 message JobQuery {
@@ -88,20 +87,21 @@ message GridSummaryRequest {
 
 message GridSummaryResponse {
   JobInfo best_job = 1;
-  repeated JobInfo all_jobs = 2;
+  repeated JobInfo all_jobs = 2;          // solo jobs COMPLETED con la métrica
 }
 
 message StreamEventsRequest {
   string consumer_id = 1;
-  int64 since_offset = 2;                 // reanudar desde un offset de Kafka
+  int64 since_event_id = 2;               // reanudar desde el último event_id recibido
 }
 
 message SystemEvent {
   google.protobuf.Timestamp timestamp = 1;
-  string event_type = 2;                  // HEARTBEAT, NODE_DOWN, JOB_ASSIGNED, JOB_REASSIGNED, JOB_COMPLETED, JOB_FAILED
+  string event_type = 2;                  // JOB_SUBMITTED, JOB_ASSIGNED, JOB_COMPLETED, JOB_REASSIGNED, JOB_FAILED, NODE_DOWN
   string worker_id = 3;
   string job_id = 4;
   string detail_json = 5;
+  int64 event_id = 6;                     // ID persistente en SQLite
 }
 
 service TrainerService {
