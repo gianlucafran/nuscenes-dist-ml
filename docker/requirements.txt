@@ -1,0 +1,21 @@
+# gRPC y protobuf (trainer_pb2 y trainer_pb2_grpc)
+grpcio==1.66.1
+grpcio-tools==1.66.1
+protobuf==5.27.2
+
+# Kafka
+confluent-kafka==2.5.3
+
+# Datos y ML
+numpy==1.26.4
+pandas==2.2.3
+scikit-learn==1.5.2
+joblib==1.4.2
+
+# Preparación de datos (prep_data)
+nuscenes-devkit==1.1.11
+pillow==10.4.0
+pyquaternion==0.9.9
+
+# CNN (PyTorch CPU: instalar con --extra-index-url https://download.pytorch.org/whl/cpu)
+torch==2.4.1+cpu
