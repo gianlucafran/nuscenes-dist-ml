@@ -1,6 +1,8 @@
-"""Grid y definiciones compartidas por baseline y benchmark. Así ambos miden el mismo trabajo
-y el coordinador no duplica constantes."""
+"""Grid y definiciones compartidas por baseline, benchmark y coordinador.
+Fuente única de: versiones de dataset/split, target y métrica por modelo."""
 import itertools
+
+__all__ = ["SEED", "GRID", "TARGET", "METRIC", "DATASET_VERSION", "SPLIT_VERSION", "expand"]
 
 SEED = 42
 
@@ -11,7 +13,7 @@ GRID = {
             "epochs": [5], "image_size": ["64x64"]},
 }
 
-# Target y métrica primaria por modelo. Única fuente de verdad para benchmark.
+# Target y métrica primaria por modelo.
 TARGET = {"LINEAR_REGRESSION": "distance_m", "MLP": "distance_m", "CNN": "category"}
 METRIC = {"LINEAR_REGRESSION": "rmse", "MLP": "rmse", "CNN": "accuracy"}
 DATASET_VERSION = "nuscenes-v1.0-mini"
