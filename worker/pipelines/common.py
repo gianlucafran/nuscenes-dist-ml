@@ -1,5 +1,4 @@
 """Utilidades compartidas: datos, semillas, métricas y escritura atómica."""
-#K
 import json
 import os
 import random
