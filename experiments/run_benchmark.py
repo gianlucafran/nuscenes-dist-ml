@@ -1,5 +1,5 @@
-"""Benchmark distribuido: envía el mismo grid al coordinador, espera a que termine
-y registra tiempo, % de reducción frente a T_base y estado de los jobs.
+"""Benchmark distribuido: envía el grid al coordinador, espera a que terminen los jobs
+y registra tiempo, reducción frente a T_base y estado final.
 
 Requisito: coordinador con base de datos nueva y N workers activos."""
 import argparse
@@ -13,18 +13,16 @@ import grpc
 
 import trainer_pb2 as pb
 import trainer_pb2_grpc as pb_grpc
-from experiments.grid import SEED, expand
+from experiments.grid import DATASET_VERSION, METRIC, SEED, SPLIT_VERSION, TARGET, expand
 
 TERMINAL = {pb.COMPLETED, pb.FAILED, pb.CANCELLED}
-TARGET = {"LINEAR_REGRESSION": "distance_m", "MLP": "distance_m", "CNN": "category"}
-METRIC = {"LINEAR_REGRESSION": "rmse", "MLP": "rmse", "CNN": "accuracy"}
 
 
 def build_request(model: str, hp: dict) -> pb.TrainRequest:
     req = pb.TrainRequest(
         model_type=pb.ModelType.Value(model),
-        dataset_version="nuscenes-v1.0-mini",
-        split_version="nuscenes-mini-official",
+        dataset_version=DATASET_VERSION,
+        split_version=SPLIT_VERSION,
         target_variable=TARGET[model],
         primary_metric=METRIC[model],
         seed=SEED,
