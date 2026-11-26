@@ -18,6 +18,7 @@ import trainer_pb2 as pb
 import trainer_pb2_grpc as pb_grpc
 from coordinator.scheduler import WORKERS, Scheduler
 from coordinator.store import Store
+from experiments.grid import DATASET_VERSION, SPLIT_VERSION, TARGET
 
 log = logging.getLogger("coordinator")
 
@@ -27,9 +28,15 @@ PORT = os.environ.get("GRPC_PORT", "50051")
 CODE_VERSION = os.environ.get("CODE_VERSION", "dev")
 
 MODEL_KEY = {pb.LINEAR_REGRESSION: "linear", pb.MLP: "mlp", pb.CNN: "cnn"}
-TARGET = {"LINEAR_REGRESSION": "distance_m", "MLP": "distance_m", "CNN": "category"}
-METRICS = {"LINEAR_REGRESSION": {"rmse", "mae"}, "MLP": {"rmse", "mae"},
-           "CNN": {"accuracy", "macro_f1"}}
+
+# Métricas que el coordinador acepta como primary_metric.
+# Incluye la métrica por defecto del grid (experiments.grid.METRIC) y alternativas.
+ALLOWED_METRICS = {
+    "LINEAR_REGRESSION": {"rmse", "mae"},
+    "MLP": {"rmse", "mae"},
+    "CNN": {"accuracy", "macro_f1"},
+}
+
 RULES = {
     "LINEAR_REGRESSION": {"alpha": "nonneg", "normalize": "any"},
     "MLP": {"hidden_layers": "layers", "learning_rate": "pos", "epochs": "pos_int"},
@@ -62,14 +69,16 @@ def validate(req) -> None:
     name = pb.ModelType.Name(req.model_type)
     if req.WhichOneof("params") != MODEL_KEY[req.model_type]:
         raise ValueError("params no corresponde a model_type")
-    if not req.dataset_version or not req.split_version:
-        raise ValueError("dataset_version y split_version son obligatorios")
+    if req.dataset_version != DATASET_VERSION:
+        raise ValueError(f"dataset_version debe ser '{DATASET_VERSION}'")
+    if req.split_version != SPLIT_VERSION:
+        raise ValueError(f"split_version debe ser '{SPLIT_VERSION}'")
     if not req.HasField("seed"):
         raise ValueError("seed es obligatorio")
     if req.target_variable != TARGET[name]:
         raise ValueError(f"target_variable debe ser '{TARGET[name]}' para {name}")
-    if req.primary_metric not in METRICS[name]:
-        raise ValueError(f"primary_metric debe ser uno de {sorted(METRICS[name])}")
+    if req.primary_metric not in ALLOWED_METRICS[name]:
+        raise ValueError(f"primary_metric debe ser uno de {sorted(ALLOWED_METRICS[name])}")
     params = getattr(req, MODEL_KEY[req.model_type])
     for field, kind in RULES[name].items():
         _check(name, field, kind, list(getattr(params, field)))
